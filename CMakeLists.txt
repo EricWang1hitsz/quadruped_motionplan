@@ -15,6 +15,8 @@ find_package(OMPL REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  grid_map_core
+  grid_map_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -167,6 +169,7 @@ add_executable(quadruped_motionplanning_test src/MotionPlanningTest.cpp)
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(quadruped_motionplanning_sampler
+    ${catkin_LIBRARIES}
     ${OMPL_LIBRARIES}
     )
 target_link_libraries(quadruped_motionplanner
