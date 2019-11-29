@@ -14,6 +14,7 @@
 
 #include <ros/ros.h>
 #include <thread>
+#include <memory>
 
 
 namespace ob = ompl::base;
@@ -70,7 +71,9 @@ private:
 
     ros::Subscriber traversability_map_sub_;
 
-//    ros::NodeHandle nodehandle_;
+    ros::NodeHandle nodehandle_;
+
+    typedef std::shared_ptr<validStateCheck> validStateCheckPtr;
 
 
 };
