@@ -6,39 +6,73 @@ namespace og = ompl::geometric;
 
 bool MyValidStateSampler::sample(ob::State *state)
 {
-//    double* val = static_cast<ob::RealVectorStateSpace::StateType*>(state)->values;
-//    double z = rng_.uniformReal(-1, 1);
+    // TODO Add heuristic sampling.
 
-//    if (z>.25 && z<.5)
-//          {
-//              double x = rng_.uniformReal(0,1.8), y = rng_.uniformReal(0,.2);
-//              switch(rng_.uniformInt(0,3))
-//              {
-//                  case 0: val[0]=x-1;  val[1]=y-1;  break;
-//                  case 1: val[0]=x-.8; val[1]=y+.8; break;
-//                  case 2: val[0]=y-1;  val[1]=x-1;  break;
-//                  case 3: val[0]=y+.8; val[1]=x-.8; break;
-//              }
-//          }
-//          else
-//          {
-//              val[0] = rng_.uniformReal(-1,1);
-//              val[1] = rng_.uniformReal(-1,1);
-//          }
-//          val[2] = z;
-//    OMPL_INFORM("MyValidStateSampler");
-//    assert(si_->isValid(state));
-//    return true;
-    bool valid = false;
-    sampler_->sampleUniform(state);
-    valid = si_->isValid(state);
-    return valid;
+
+//    double* val = static_cast<ob::RealVectorStateSpace::StateType*>(state)->values;
+    double x = rng_.uniformReal(0, 20);
+    double y = rng_.uniformReal(-2,2);
+    double yaw = rng_.uniformReal(-1,1);
+
+    static_cast<ob::SE2StateSpace::StateType*>(state)->setX(x);
+    static_cast<ob::SE2StateSpace::StateType*>(state)->setY(y);
+    static_cast<ob::SE2StateSpace::StateType*>(state)->setYaw(yaw);
+
+    assert(si_->isValid(state));
+    // Publish sampled state marker
+    stateMarkerPub(state);
+    return true;
 }
 
 bool MyValidStateSampler::sampleNear(ob::State *, const ob::State *, const double)
 {
     throw ompl::Exception("MyValidStateSampler::sampleNear", "not implemented");
     return false;
+}
+
+void MyValidStateSampler::stateMarkerPub(ob::State *state)
+{
+    const ob::SE2StateSpace::StateType *se2state = state->as<ob::SE2StateSpace::StateType>();
+    const ob::RealVectorStateSpace::StateType *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
+
+    double x = pos->values[0];
+    double y = pos->values[1];
+    double yaw = pos->values[2];
+
+    geometry_msgs::Pose base_pose;
+    base_pose.position.x = x;
+    base_pose.position.y = y;
+    base_pose.position.z = 0.5;
+    geometry_msgs::Quaternion quaternion_ = tf::createQuaternionMsgFromYaw(yaw);
+    base_pose.orientation.x = quaternion_.x;
+    base_pose.orientation.y = quaternion_.y;
+    base_pose.orientation.z = quaternion_.z;
+    base_pose.orientation.w = quaternion_.w;
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "odom";
+    marker.header.stamp = ros::Time();
+    marker.ns = "my_namespace";
+    marker.id = 1;
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = base_pose.position.x;
+    marker.pose.position.y = base_pose.position.y;
+    marker.pose.position.z = base_pose.position.z;
+    marker.pose.orientation.x = base_pose.orientation.x;
+    marker.pose.orientation.y = base_pose.orientation.y;
+    marker.pose.orientation.z = base_pose.orientation.z;
+    marker.pose.orientation.w = base_pose.orientation.w;
+    marker.scale.x = 0.2;
+    marker.scale.y = 0.2;
+    marker.scale.z = 0.2;
+    marker.color.a = 1.0;
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+//    marker.mesh_resource = "/home/hit/Documents/kinect.dae";
+    state_marker_pub_.publish(marker);
+    ROS_INFO("Publish sampled state maker once");
 }
 
 validStateCheck::validStateCheck()
@@ -64,22 +98,27 @@ bool validStateCheck::isStateValid(const ob::State *state)
 
     double x = pos->values[0];
     double y = pos->values[1];
+    double yaw = pos->values[2];
+
+    ROS_INFO("isStateValid");
     double radius = 1.0;
     Eigen::Vector2d center(x, y);
 
-//    ROS_INFO_STREAM("center(x, y)");
+//    return true;
 
-//    validStateCheckPtr vsck;
+    ROS_INFO_STREAM("center(x, y)");
 
-//    for(grid_map::CircleIterator iterator(vsck->traversability_map_, center, radius); !iterator.isPastEnd(); ++iterator)
-//    {
-//        ROS_INFO("Meet traversability requirement");
-//        if(vsck->traversability_map_.at("traversability", *iterator) > 0.9)
+    validStateCheckPtr vsck;
+
+    ROS_INFO("Created validStateChecker smart pointer");
+    for(grid_map::CircleIterator iterator(vsck->traversability_map_, center, radius); !iterator.isPastEnd(); ++iterator)
+    {
+        ROS_INFO("Meet traversability requirement");
+        if(vsck->traversability_map_.at("traversability", *iterator) > 0.9)
             return true;
-//        else
-//            return false;
-//    }
+    }
 }
+
 
 
 

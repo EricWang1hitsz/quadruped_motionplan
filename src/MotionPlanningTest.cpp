@@ -23,8 +23,8 @@ motion_planning::motion_planning(void)
     ob::ScopedState<ob::SE2StateSpace> goal(space);
     // set the bounds, according to the space dimension;
     ob::RealVectorBounds bounds(2);
-    bounds.setLow(-10);
-    bounds.setHigh(10);
+    bounds.setLow(-2);
+    bounds.setHigh(20);
     space->as<ob::SE2StateSpace>()->setBounds(bounds);
 
     // define a simple setup class
@@ -49,6 +49,11 @@ motion_planning::motion_planning(void)
 
     // set the start and goal states
     pdef_->setStartAndGoalStates(start, goal);
+
+//    ss.getSpaceInformation()->setValidStateSamplerAllocator(allocMyValidStateSampler);
+
+    si_->setValidStateSamplerAllocator(allocMyValidStateSampler);
+
     ROS_INFO("MotionPlanning Construction:: Initilized");
 }
 
@@ -91,7 +96,7 @@ void motion_planning::setGoal(double x, double y, double yaw)
 void motion_planning::basePoseCb(const geometry_msgs::PoseWithCovarianceStampedPtr &base_pose)
 {
     double x, y, z;
-    x = base_pose->pose.pose.position.x + 1.2;
+    x = base_pose->pose.pose.position.x;
     y = base_pose->pose.pose.position.y;
     z = base_pose->pose.pose.position.z;
 
@@ -122,9 +127,11 @@ void motion_planning::plan()
 
 //    ob::PlannerPtr plan(new og::RRT_IM(si_));
 
+    ROS_INFO("Start planning");
+
     og::RRT_IM* rrt = new og::RRT_IM(si_);
 
-    rrt->setRange(0.5);
+    rrt->setRange(0.05);
 
     ob::PlannerPtr plan(rrt);
 
@@ -133,7 +140,7 @@ void motion_planning::plan()
     plan->setup();
 
     // attempt to solve the problem within ten seconds of planning time
-    ob::PlannerStatus solved =plan->solve(30.0);
+    ob::PlannerStatus solved =plan->solve(60.0);
     if (solved)
     {
         std::cout << "Found solution:" << std::endl;
@@ -241,6 +248,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "MotionPlanningTest");
     validStateCheck vsc;
     motion_planning mopl;
+//    mopl.setStart(0, 0, 0);
+//    mopl.setGoal(1, 1, 1);
     ros::Rate loop_rate(1);
     while(ros::ok())
     {
