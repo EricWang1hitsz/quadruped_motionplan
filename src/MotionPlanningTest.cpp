@@ -6,6 +6,50 @@
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
+grid_map::GridMap traversability_map_;
+
+void traverabilityMapCallback(const grid_map_msgs::GridMapPtr &traversability_map)// Pointer
+{
+
+    grid_map::GridMapRosConverter::fromMessage(*traversability_map, traversability_map_);// Dereference
+    ROS_INFO("Receive traversability map successfully");
+
+}
+
+bool isStateValid(const ob::State *state)
+{
+    OMPL_INFORM("Test State is Valid");
+
+    const ob::SE2StateSpace::StateType *se2state = state->as<ob::SE2StateSpace::StateType>();
+    const ob::RealVectorStateSpace::StateType *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
+
+    std::this_thread::sleep_for(ompl::time::seconds(0.0005));
+
+    double x = pos->values[0];
+    double y = pos->values[1];
+    double yaw = pos->values[2];
+
+    double radius = 0.7;
+    Eigen::Vector2d center(x, y);
+
+//    return true;
+
+    for(grid_map::CircleIterator iterator(traversability_map_, center, radius); !iterator.isPastEnd(); ++iterator)
+    {
+
+        if(traversability_map_.at("traversability", *iterator) > 0.95)
+        {
+            ROS_INFO("Meet traversability requirement");
+            return true;
+        }
+        else
+        {
+            ROS_INFO("Not meet traversability requirement");
+            return false;
+        }
+    }
+}
+
 motion_planning::motion_planning(void)
 {
     ROS_INFO("Class motion_planning constrcting...");
@@ -23,8 +67,8 @@ motion_planning::motion_planning(void)
     ob::ScopedState<ob::SE2StateSpace> goal(space);
     // set the bounds, according to the space dimension;
     ob::RealVectorBounds bounds(2);
-    bounds.setLow(-2);
-    bounds.setHigh(20);
+    bounds.setLow(-2.5);
+    bounds.setHigh(2.5);
     space->as<ob::SE2StateSpace>()->setBounds(bounds);
 
     // define a simple setup class
@@ -41,7 +85,7 @@ motion_planning::motion_planning(void)
     goal->setYaw(1);
 
     // set state validity checking for this space
-    si_->setStateValidityChecker(validStateCheck::isStateValid);
+    si_->setStateValidityChecker(isStateValid);
 
 
     // creat a problem instance
@@ -131,7 +175,10 @@ void motion_planning::plan()
 
     og::RRT_IM* rrt = new og::RRT_IM(si_);
 
+//    og::InformedRRTstar* rrt = new og::InformedRRTstar(si_);
+
     rrt->setRange(0.05);
+    rrt->setGoalBias(0.5);
 
     ob::PlannerPtr plan(rrt);
 
@@ -140,7 +187,7 @@ void motion_planning::plan()
     plan->setup();
 
     // attempt to solve the problem within ten seconds of planning time
-    ob::PlannerStatus solved =plan->solve(60.0);
+    ob::PlannerStatus solved =plan->solve(30.0);
     if (solved)
     {
         std::cout << "Found solution:" << std::endl;
@@ -246,8 +293,10 @@ void motion_planning::traj3d_pub(og::PathGeometric *pth)
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "MotionPlanningTest");
-    validStateCheck vsc;
+//    validStateCheck vsc;
     motion_planning mopl;
+    ros::NodeHandle nodehandle_;
+    ros::Subscriber traversability_map_sub_ = nodehandle_.subscribe("grid_map_filter_demo/filtered_map", 1,traverabilityMapCallback);
 //    mopl.setStart(0, 0, 0);
 //    mopl.setGoal(1, 1, 1);
     ros::Rate loop_rate(1);

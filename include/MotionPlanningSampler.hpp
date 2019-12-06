@@ -80,28 +80,29 @@ ob::ValidStateSamplerPtr allocMyValidStateSampler(const ob::SpaceInformation *si
     return std::make_shared<MyValidStateSampler>(si);
 }
 
-class validStateCheck
-{
-public:
+//class validStateCheck
+//{
+//public:
 
-    validStateCheck();
+//    validStateCheck();
 
-    void traverabilityMapCallback(const grid_map_msgs::GridMapPtr& traversability_map);
+//    void traverabilityMapCallback(const grid_map_msgs::GridMapPtr& traversability_map);
 
-    static bool isStateValid(const ob::State *state);
+////    static bool isStateValid(const ob::State *state);
+
+//    static grid_map::GridMap traversability_map_;
+
+//private:
+
+////    static grid_map::GridMap traversability_map_;
+
+//    ros::Subscriber traversability_map_sub_;
+
+//    ros::NodeHandle nodehandle_;
+
+//    typedef std::shared_ptr<validStateCheck> validStateCheckPtr;
 
 
-private:
-
-    grid_map::GridMap traversability_map_;
-
-    ros::Subscriber traversability_map_sub_;
-
-    ros::NodeHandle nodehandle_;
-
-    typedef std::shared_ptr<validStateCheck> validStateCheckPtr;
-
-
-};
+//};
 
 

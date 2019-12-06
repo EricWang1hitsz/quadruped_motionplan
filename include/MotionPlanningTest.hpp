@@ -1,6 +1,7 @@
 #include "ompl/base/spaces/SE2StateSpace.h"
 #include "ompl/base/ProblemDefinition.h"
 #include "ompl/geometric/SimpleSetup.h"
+#include "ompl/geometric/planners/rrt/InformedRRTstar.h"
 #include "MotionPlanningSampler.hpp"
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
