@@ -1,61 +1,17 @@
 #include "MotionPlanner.hpp"
 #include "MotionPlanningSampler.hpp"
 #include "MotionPlanningTest.hpp"
-#include "ompl/geometric/planners/prm/PRM.h"
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
-
-grid_map::GridMap traversability_map_;
-
-void traverabilityMapCallback(const grid_map_msgs::GridMapPtr &traversability_map)// Pointer
-{
-
-    grid_map::GridMapRosConverter::fromMessage(*traversability_map, traversability_map_);// Dereference
-    ROS_INFO("Receive traversability map successfully");
-
-}
-
-bool isStateValid(const ob::State *state)
-{
-    OMPL_INFORM("Test State is Valid");
-
-    const ob::SE2StateSpace::StateType *se2state = state->as<ob::SE2StateSpace::StateType>();
-    const ob::RealVectorStateSpace::StateType *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
-
-    std::this_thread::sleep_for(ompl::time::seconds(0.0005));
-
-    double x = pos->values[0];
-    double y = pos->values[1];
-    double yaw = pos->values[2];
-
-    double radius = 0.7;
-    Eigen::Vector2d center(x, y);
-
-//    return true;
-
-    for(grid_map::CircleIterator iterator(traversability_map_, center, radius); !iterator.isPastEnd(); ++iterator)
-    {
-
-        if(traversability_map_.at("traversability", *iterator) > 0.95)
-        {
-            ROS_INFO("Meet traversability requirement");
-            return true;
-        }
-        else
-        {
-            ROS_INFO("Not meet traversability requirement");
-            return false;
-        }
-    }
-}
 
 motion_planning::motion_planning(void)
 {
     ROS_INFO("Class motion_planning constrcting...");
     traj_pub_ = nh_.advertise<nav_msgs::Path>("waypoints", 1000);
     traj3d_pub_ = nh_.advertise<nav_msgs::Path>("waypoints_3d", 1000);
-    elevation_map_sub_ = nh_.subscribe("/elevation_mapping/elevation_map", 1, &motion_planning::elevationMapCallback, this);
+    elevation_map_sub_ = nh_.subscribe("/traversability_estimation/traversability_map", 1, &motion_planning::elevationMapCallback, this);
+//    elevation_map_sub_ = nh_.subscribe("/traversability_estimation/traversability_map", &motion_planning::elevationMapCallback, this);
     base_pose_sub_ = nh_.subscribe("/pose_pub_node/base_pose", 1, &motion_planning::basePoseCb, this);
     goal_pose_sub_ = nh_.subscribe("/move_base_simple/goal", 1, &motion_planning::goalPoseCb, this);
 
@@ -85,8 +41,10 @@ motion_planning::motion_planning(void)
     goal->setYaw(1);
 
     // set state validity checking for this space
-    si_->setStateValidityChecker(isStateValid);
+    si_->setStateValidityChecker(std::make_shared<ob::myStateValidityChecker>(si_));
 
+    // Set the instance of the motion validity checker to use.
+    si_->setMotionValidator(std::make_shared<ob::myMotionValidator>(si_));
 
     // creat a problem instance
     pdef_ = ob::ProblemDefinitionPtr(new ob::ProblemDefinition(si_));
@@ -173,11 +131,13 @@ void motion_planning::plan()
 
     ROS_INFO("Start planning");
 
-    og::RRT_IM* rrt = new og::RRT_IM(si_);
+//    og::RRT_IM* rrt = new og::RRT_IM(si_); // RRT.
 
-//    og::InformedRRTstar* rrt = new og::InformedRRTstar(si_);
+//    og::RRTstar *rrt = new og::RRTstar(si_); // RRTstar.
 
-    rrt->setRange(0.05);
+    og::InformedRRTstar_IM* rrt = new og::InformedRRTstar_IM(si_); // InformedRRTstar.
+
+    rrt->setRange(0.02);
     rrt->setGoalBias(0.5);
 
     ob::PlannerPtr plan(rrt);
@@ -187,7 +147,7 @@ void motion_planning::plan()
     plan->setup();
 
     // attempt to solve the problem within ten seconds of planning time
-    ob::PlannerStatus solved =plan->solve(30.0);
+    ob::PlannerStatus solved =plan->solve(5.0);
     if (solved)
     {
         std::cout << "Found solution:" << std::endl;
@@ -293,11 +253,8 @@ void motion_planning::traj3d_pub(og::PathGeometric *pth)
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "MotionPlanningTest");
-//    validStateCheck vsc;
     motion_planning mopl;
-    ros::NodeHandle nodehandle_;
-    ros::Subscriber traversability_map_sub_ = nodehandle_.subscribe("grid_map_filter_demo/filtered_map", 1,traverabilityMapCallback);
-//    mopl.setStart(0, 0, 0);
+//    mopl.setStart(-2, -2, 1.35); // default start pose.
 //    mopl.setGoal(1, 1, 1);
     ros::Rate loop_rate(1);
     while(ros::ok())

@@ -4,14 +4,14 @@ project(quadruped_motionplan)
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
-#set(OMPL_INCLUDE_DIRS /usr/local/include/ompl)
-#set(OMPL_LIBRARY_DIRS /usr/local/lib)
+set(OMPL_INCLUDE_DIRS /usr/local/include/ompl)
+set(OMPL_LIBRARY_DIRS /usr/local/lib/libompl.so)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(octomap REQUIRED)
 find_package(fcl REQUIRED)
-find_package(OMPL REQUIRED)
+#find_package(OMPL REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
@@ -143,6 +143,10 @@ link_libraries(
 # )
 add_library(quadruped_motionplanning_sampler src/MotionPlanningSampler.cpp)
 add_library(quadruped_motionplanner src/MotionPlanner.cpp)
+add_library(quadruped_motionplannerRRTstar src/MotionPlannerRRTstar.cpp)
+add_library(quadruped_motionplannerInfRRTstar src/MotionPlannerInfRRTstar.cpp)
+add_library(quadruped_motionvaliditychecker src/MotionValidityChecker.cpp)
+add_library(quadruped_statevaliditychecker src/StateValidityChecker.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -170,21 +174,45 @@ add_executable(quadruped_motionplanning_test src/MotionPlanningTest.cpp)
 # )
 target_link_libraries(quadruped_motionplanning_sampler
     ${catkin_LIBRARIES}
-    ${OMPL_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
     )
 target_link_libraries(quadruped_motionplanner
     ${catkin_LIBRARIES}
-    ${OMPL_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
     )
 target_link_libraries(quadruped_motionplanning_test
     ${catkin_LIBRARIES}
     ${PCL_LIBRARIES}
     ${OCTOMAP_LIBRARIES}
     ${fcl_LIBRARIES}
-    ${OMPL_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
     quadruped_motionplanning_sampler
     quadruped_motionplanner
+    quadruped_motionplannerRRTstar
+    quadruped_motionplannerInfRRTstar
+    quadruped_motionvaliditychecker
+    quadruped_statevaliditychecker
     )
+target_link_libraries(quadruped_motionvaliditychecker
+    ${catkin_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
+    )
+target_link_libraries(quadruped_statevaliditychecker
+    ${catkin_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
+    )
+target_link_libraries(quadruped_motionplannerRRTstar
+    ${catkin_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
+    quadruped_motionvaliditychecker
+    )
+target_link_libraries(quadruped_motionplannerInfRRTstar
+    ${catkin_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
+    quadruped_motionplannerRRTstar
+    quadruped_motionvaliditychecker
+    )
+
 
 
 #############

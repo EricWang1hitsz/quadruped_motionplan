@@ -96,7 +96,7 @@ ompl::base::PlannerStatus ompl::geometric::RRT_IM::solve(const base::PlannerTerm
     double approxdif = std::numeric_limits<double>::infinity();
     auto *rmotion = new Motion(si_);
     base::State *rstate = rmotion->state;
-    base::State *xstate = si_->allocState();
+    base::State *xstate = si_->allocState(); //eric_wang: Allocate memory for a state.
 
     while (!ptc)
     {
@@ -114,17 +114,19 @@ ompl::base::PlannerStatus ompl::geometric::RRT_IM::solve(const base::PlannerTerm
         double d = si_->distance(nmotion->state, rstate);
         if (d > maxDistance_)
         {
+            //eric_wang: Computes the state that lies at time t in [0,1] on the segment that connects from state to state.
             si_->getStateSpace()->interpolate(nmotion->state, rstate, maxDistance_ / d, xstate);
             dstate = xstate;
         }
 
-        if (si_->checkMotion(nmotion->state, dstate))
+        if (si_->checkMotion(nmotion->state, dstate)) // TODO check path is valid or not using traversability map.
         {
             if (addIntermediateStates_)
             {
                 std::vector<base::State *> states;
                 const unsigned int count = si_->getStateSpace()->validSegmentCount(nmotion->state, dstate);
-
+                //eric_wang: Get count states that make up a motion between s1 and s2. Returns the number of states
+                //that were added to states. These states are not checked for validity.
                 if (si_->getMotionStates(nmotion->state, dstate, states, count, true, true))
                     si_->freeState(states[0]);
 
