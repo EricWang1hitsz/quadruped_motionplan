@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   grid_map_core
   grid_map_ros
+  traversability_estimation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -147,6 +148,7 @@ add_library(quadruped_motionplannerRRTstar src/MotionPlannerRRTstar.cpp)
 add_library(quadruped_motionplannerInfRRTstar src/MotionPlannerInfRRTstar.cpp)
 add_library(quadruped_motionvaliditychecker src/MotionValidityChecker.cpp)
 add_library(quadruped_statevaliditychecker src/StateValidityChecker.cpp)
+add_library(quadruped_motioncostintegralobjective src/MotionCostIntegralObjective.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -192,6 +194,7 @@ target_link_libraries(quadruped_motionplanning_test
     quadruped_motionplannerInfRRTstar
     quadruped_motionvaliditychecker
     quadruped_statevaliditychecker
+    quadruped_motioncostintegralobjective
     )
 target_link_libraries(quadruped_motionvaliditychecker
     ${catkin_LIBRARIES}
@@ -212,7 +215,10 @@ target_link_libraries(quadruped_motionplannerInfRRTstar
     quadruped_motionplannerRRTstar
     quadruped_motionvaliditychecker
     )
-
+target_link_libraries(quadruped_motioncostintegralobjective
+    ${catkin_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
+    )
 
 
 #############

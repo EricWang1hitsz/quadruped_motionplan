@@ -52,6 +52,9 @@ motion_planning::motion_planning(void)
     // set the start and goal states
     pdef_->setStartAndGoalStates(start, goal);
 
+//    pdef_->setOptimizationObjective(getPathLengthObjective(si_));
+    pdef_->setOptimizationObjective(getMotionCostIntegralObjective(si_, false)); // Defined optimal obejective.
+
 //    ss.getSpaceInformation()->setValidStateSamplerAllocator(allocMyValidStateSampler);
 
     si_->setValidStateSamplerAllocator(allocMyValidStateSampler);
@@ -67,7 +70,7 @@ void motion_planning::init_start(void)
     set_start = true;
 }
 
-
+// start state must satisfy the bound and state valid checker.
 void motion_planning::setStart(double x, double y, double yaw)
 {
     ob::ScopedState<ob::SE2StateSpace> start(space);
@@ -147,7 +150,7 @@ void motion_planning::plan()
     plan->setup();
 
     // attempt to solve the problem within ten seconds of planning time
-    ob::PlannerStatus solved =plan->solve(5.0);
+    ob::PlannerStatus solved = plan->solve(240.0);
     if (solved)
     {
         std::cout << "Found solution:" << std::endl;
@@ -161,6 +164,7 @@ void motion_planning::plan()
         path->print(std::cout);
 
         og::PathGeometric* pth_ = pdef_->getSolutionPath()->as<og::PathGeometric>();
+        pth_->smoothness();
         traj_pub(pth_);
         traj3d_pub(pth_);
 }
@@ -169,7 +173,7 @@ void motion_planning::elevationMapCallback(const grid_map_msgs::GridMapPtr &elev
 {
     grid_map::GridMapRosConverter::fromMessage(*elevation_map, elevation_map_);
     set_start = true;
-    ROS_INFO("Receive elevation map successfully");
+    ROS_INFO("Motion planning test::Receive elevation map successfully");
 }
 
 
@@ -249,6 +253,7 @@ void motion_planning::traj3d_pub(og::PathGeometric *pth)
         traj3d_pub_.publish(msg);
     }
 }
+
 
 int main(int argc, char **argv)
 {

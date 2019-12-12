@@ -23,7 +23,7 @@ bool ompl::base::myMotionValidator::checkMotion(const State *s1, const State *s2
     std::queue<std::pair<int, int>> pos;
     if(nd >= 2)
     {
-        ROS_INFO("nd >= 2");
+        ROS_INFO("Motion validity checker::checkMotion::nd >= 2");
         pos.emplace(1, nd - 1); //eric_wang: Add 1 and n-1 into pos queue.
 
         /* temporary storage for the checked state */

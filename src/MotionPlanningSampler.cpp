@@ -75,18 +75,6 @@ void MyValidStateSampler::stateMarkerPub(ob::State *state)
     ROS_INFO("Publish sampled state maker once");
 }
 
-//validStateCheck::validStateCheck()
-//{
-//    ROS_INFO("Class validStateCheck is constructing...");
-//    traversability_map_sub_ = nodehandle_.subscribe("grid_map_filter_demo/filtered_map", 1, &validStateCheck::traverabilityMapCallback, this);
-//}
-
-//void validStateCheck::traverabilityMapCallback(const grid_map_msgs::GridMapPtr &traversability_map)// Pointer
-//{
-//    grid_map::GridMapRosConverter::fromMessage(*traversability_map, traversability_map_);// Dereference
-//    ROS_INFO("Receive traversability map successfully");
-
-//}
 
 
 

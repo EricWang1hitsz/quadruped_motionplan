@@ -1,6 +1,9 @@
 #include "ompl/base/spaces/SE2StateSpace.h"
 #include "ompl/base/ProblemDefinition.h"
 #include "ompl/geometric/SimpleSetup.h"
+#include "ompl/base/objectives/PathLengthOptimizationObjective.h"
+#include "ompl/base/objectives/StateCostIntegralObjective.h"
+#include "MotionCostIntegralObjective.hpp"
 #include "StateValidityChecker.hpp"
 #include "MotionValidityChecker.hpp" // check motion is valid or not.
 #include "MotionPlanningSampler.hpp"
@@ -69,6 +72,15 @@ private:
     ros::Subscriber goal_pose_sub_;
 
     ros::NodeHandle nh_;
+
+    ob::OptimizationObjectivePtr getPathLengthObjective(const ob::SpaceInformationPtr& si)
+    {
+        ob::OptimizationObjectivePtr obj (new ob::PathLengthOptimizationObjective(si));
+        obj->setCostThreshold(ob::Cost(0.50)); // Specify an optimality threshold.
+        return obj;
+    }
+
+
 
 
 };
