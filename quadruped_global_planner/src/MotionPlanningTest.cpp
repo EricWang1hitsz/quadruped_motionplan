@@ -53,7 +53,7 @@ motion_planning::motion_planning(void)
     pdef_->setStartAndGoalStates(start, goal);
 
 //    pdef_->setOptimizationObjective(getPathLengthObjective(si_));
-    pdef_->setOptimizationObjective(getMotionCostIntegralObjective(si_, false)); // Defined optimal obejective.
+//    pdef_->setOptimizationObjective(getMotionCostIntegralObjective(si_, false)); // Defined optimal obejective.
 
 //    ss.getSpaceInformation()->setValidStateSamplerAllocator(allocMyValidStateSampler);
 
@@ -150,23 +150,27 @@ void motion_planning::plan()
     plan->setup();
 
     // attempt to solve the problem within ten seconds of planning time
-    ob::PlannerStatus solved = plan->solve(240.0);
+    ob::PlannerStatus solved = plan->solve(30.0);
     if (solved)
     {
         std::cout << "Found solution:" << std::endl;
         // print the path to screen
-    }
-    else
-        std::cout << "No solution found" << std::endl;
 
         ob::PathPtr path = pdef_->getSolutionPath();
 
         path->print(std::cout);
 
         og::PathGeometric* pth_ = pdef_->getSolutionPath()->as<og::PathGeometric>();
-        pth_->smoothness();
         traj_pub(pth_);
-        traj3d_pub(pth_);
+        og::PathSimplifier* pathBSpline = new og::PathSimplifier(si_);
+        pathBSpline->smoothBSpline(*pth_, 5);
+//        traj_pub(pth_);
+        traj3d_pub(pth_); // Bspline trajectory.
+    }
+    else
+        std::cout << "No solution found" << std::endl;
+
+
 }
 
 void motion_planning::elevationMapCallback(const grid_map_msgs::GridMapPtr &elevation_map)
@@ -200,7 +204,7 @@ void motion_planning::traj_pub(og::PathGeometric* pth)
         const ob::RealVectorStateSpace::StateType *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
         pose.pose.position.x = pos->values[0];
         pose.pose.position.y = pos->values[1];
-        pose.pose.position.z = 0.5;
+        pose.pose.position.z = 0.2;
 
         double yaw = pos->values[2];
         // Creat quaternion from yaw;
@@ -253,6 +257,7 @@ void motion_planning::traj3d_pub(og::PathGeometric *pth)
         traj3d_pub_.publish(msg);
     }
 }
+
 
 
 int main(int argc, char **argv)

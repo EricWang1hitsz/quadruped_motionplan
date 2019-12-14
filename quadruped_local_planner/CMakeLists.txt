@@ -1,23 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(quadruped_motionplan)
+project(quadruped_local_planner)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
-set(OMPL_INCLUDE_DIRS /usr/local/include/ompl)
-set(OMPL_LIBRARY_DIRS /usr/local/lib/libompl.so)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(octomap REQUIRED)
-find_package(fcl REQUIRED)
-#find_package(OMPL REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   std_msgs
-  grid_map_core
-  grid_map_ros
-  traversability_estimation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -84,9 +78,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
 
-## To declare and build dynamic reconfigure parameters within thisLinux / macOS Build Status Windows Build status
-
-
+## To declare and build dynamic reconfigure parameters within this
 ## package, follow these steps:
 ## * In the file package.xml:
 ##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
@@ -113,8 +105,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES quadruped_motionplan
-  CATKIN_DEPENDS roscpp std_msgs
+  LIBRARIES quadruped_local_planner
+  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -125,30 +117,16 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- include
+  include
   ${catkin_INCLUDE_DIRS}
-  ${OMPL_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
-  ${OCTOMAP_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIR}
-  ${fcl_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
-
-link_libraries(
-    ${OMPL_LIBRARY_DIRS}
-    )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/quadruped_motionplan.cpp
+#   src/${PROJECT_NAME}/quadruped_local_planner.cpp
 # )
-add_library(quadruped_motionplanning_sampler src/MotionPlanningSampler.cpp)
-add_library(quadruped_motionplanner src/MotionPlanner.cpp)
-add_library(quadruped_motionplannerRRTstar src/MotionPlannerRRTstar.cpp)
-add_library(quadruped_motionplannerInfRRTstar src/MotionPlannerInfRRTstar.cpp)
-add_library(quadruped_motionvaliditychecker src/MotionValidityChecker.cpp)
-add_library(quadruped_statevaliditychecker src/StateValidityChecker.cpp)
-add_library(quadruped_motioncostintegralobjective src/MotionCostIntegralObjective.cpp)
+add_library(dwa_planner src/dwa_planner.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -158,8 +136,8 @@ add_library(quadruped_motioncostintegralobjective src/MotionCostIntegralObjectiv
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/quadruped_motionplan_node.cpp)
-add_executable(quadruped_motionplanning_test src/MotionPlanningTest.cpp)
+# add_executable(${PROJECT_NAME}_node src/quadruped_local_planner_node.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -174,52 +152,9 @@ add_executable(quadruped_motionplanning_test src/MotionPlanningTest.cpp)
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(quadruped_motionplanning_sampler
-    ${catkin_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    )
-target_link_libraries(quadruped_motionplanner
-    ${catkin_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    )
-target_link_libraries(quadruped_motionplanning_test
-    ${catkin_LIBRARIES}
-    ${PCL_LIBRARIES}
-    ${OCTOMAP_LIBRARIES}
-    ${fcl_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    quadruped_motionplanning_sampler
-    quadruped_motionplanner
-    quadruped_motionplannerRRTstar
-    quadruped_motionplannerInfRRTstar
-    quadruped_motionvaliditychecker
-    quadruped_statevaliditychecker
-    quadruped_motioncostintegralobjective
-    )
-target_link_libraries(quadruped_motionvaliditychecker
-    ${catkin_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    )
-target_link_libraries(quadruped_statevaliditychecker
-    ${catkin_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    )
-target_link_libraries(quadruped_motionplannerRRTstar
-    ${catkin_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    quadruped_motionvaliditychecker
-    )
-target_link_libraries(quadruped_motionplannerInfRRTstar
-    ${catkin_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    quadruped_motionplannerRRTstar
-    quadruped_motionvaliditychecker
-    )
-target_link_libraries(quadruped_motioncostintegralobjective
-    ${catkin_LIBRARIES}
-    ${OMPL_LIBRARY_DIRS}
-    )
 
+target_link_libraries(dwa_planner
+    ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -268,7 +203,7 @@ target_link_libraries(quadruped_motioncostintegralobjective
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_quadruped_motionplan.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_quadruped_local_planner.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
