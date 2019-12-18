@@ -32,80 +32,61 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * Author: Eitan Marder-Eppstein
+ * Author: TKruse
  *********************************************************************/
 
-#ifndef ABSTRACT_LOCAL_PLANNER_ODOM_H_
-#define ABSTRACT_LOCAL_PLANNER_ODOM_H_
+#ifndef ODOMETRY_HELPER_ROS2_H_
+#define ODOMETRY_HELPER_ROS2_H_
 
-#include <nav_core/base_local_planner.h>
-
+#include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
 #include <boost/thread.hpp>
-
-#include <costmap_2d/costmap_2d.h>
-#include <tf2_ros/buffer.h>
-
-#include "local_planner_limits.h"
-
+#include <geometry_msgs/PoseStamped.h>
 
 namespace quadruped_local_planner {
 
-/**
- * @class LocalPlannerUtil
- * @brief Helper class implementing infrastructure code many local planner implementations may need.
- */
-class LocalPlannerUtil {
-
-private:
-  // things we get from move_base
-  std::string name_;
-  std::string global_frame_;
-
-  costmap_2d::Costmap2D* costmap_;
-  tf2_ros::Buffer* tf_;
-
-
-  std::vector<geometry_msgs::PoseStamped> global_plan_;
-
-
-  boost::mutex limits_configuration_mutex_;
-  bool setup_;
-  LocalPlannerLimits default_limits_;
-  LocalPlannerLimits limits_;
-  bool initialized_;
-
+class OdometryHelperRos {
 public:
 
+  /** @brief Constructor.
+   * @param odom_topic The topic on which to subscribe to Odometry
+   *        messages.  If the empty string is given (the default), no
+   *        subscription is done. */
+  OdometryHelperRos(std::string odom_topic = "");
+  ~OdometryHelperRos() {}
+
   /**
-   * @brief  Callback to update the local planner's parameters
+   * @brief  Callback for receiving odometry data
+   * @param msg An Odometry message
    */
-  void reconfigureCB(LocalPlannerLimits &config, bool restore_defaults);
+  void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
-  LocalPlannerUtil() : initialized_(false) {}
+  void getOdom(nav_msgs::Odometry& base_odom);
 
-  ~LocalPlannerUtil() {
-  }
+  void getRobotVel(geometry_msgs::PoseStamped& robot_vel);
 
-  void initialize(tf2_ros::Buffer* tf,
-      costmap_2d::Costmap2D* costmap,
-      std::string global_frame);
+  /** @brief Set the odometry topic.  This overrides what was set in the constructor, if anything.
+   *
+   * This unsubscribes from the old topic (if any) and subscribes to the new one (if any).
+   *
+   * If odom_topic is the empty string, this just unsubscribes from the previous topic. */
+  void setOdomTopic(std::string odom_topic);
 
-  bool getGoal(geometry_msgs::PoseStamped& goal_pose);
+  /** @brief Return the current odometry topic. */
+  std::string getOdomTopic() const { return odom_topic_; }
 
-  bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
+private:
+  //odom topic
+  std::string odom_topic_;
 
-  bool getLocalPlan(const geometry_msgs::PoseStamped& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan);
-
-  costmap_2d::Costmap2D* getCostmap();
-
-  LocalPlannerLimits getCurrentLimits();
-
-  std::string getGlobalFrame(){ return global_frame_; }
+  // we listen on odometry on the odom topic
+  ros::Subscriber odom_sub_;
+  nav_msgs::Odometry base_odom_;
+  boost::mutex odom_mutex_;
+  // global tf frame id
+  std::string frame_id_; ///< The frame_id associated this data
 };
 
-
-
-
-};
-
-#endif /* ABSTRACT_LOCAL_PLANNER_ODOM_H_ */
+} /* namespace base_local_planner */
+#define CHUNKY 1
+#endif /* ODOMETRY_HELPER_ROS2_H_ */

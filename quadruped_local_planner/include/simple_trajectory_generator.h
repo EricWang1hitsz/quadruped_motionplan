@@ -38,11 +38,11 @@
 #ifndef SIMPLE_TRAJECTORY_GENERATOR_H_
 #define SIMPLE_TRAJECTORY_GENERATOR_H_
 
-#include <base_local_planner/trajectory_sample_generator.h>
-#include <base_local_planner/local_planner_limits.h>
+#include "local_planner_limits.h"
+#include "trajectory.h"
 #include <Eigen/Core>
 
-namespace base_local_planner {
+namespace quadruped_local_planner {
 
 /**
  * generates trajectories based on equi-distant discretisation of the degrees of freedom.
@@ -58,7 +58,7 @@ namespace base_local_planner {
  * trajectory rollout approach will sample max-x-velocities 0m/s up to 1m/s
  * trajectory rollout approach does so respecting the acceleration limit, so it gradually increases velocity
  */
-class SimpleTrajectoryGenerator: public base_local_planner::TrajectorySampleGenerator {
+class SimpleTrajectoryGenerator {
 public:
 
   SimpleTrajectoryGenerator() {
@@ -80,7 +80,7 @@ public:
       const Eigen::Vector3f& pos,
       const Eigen::Vector3f& vel,
       const Eigen::Vector3f& goal,
-      base_local_planner::LocalPlannerLimits* limits,
+      quadruped_local_planner::LocalPlannerLimits* limits,
       const Eigen::Vector3f& vsamples,
       std::vector<Eigen::Vector3f> additional_samples,
       bool discretize_by_time = false);
@@ -97,7 +97,7 @@ public:
       const Eigen::Vector3f& pos,
       const Eigen::Vector3f& vel,
       const Eigen::Vector3f& goal,
-      base_local_planner::LocalPlannerLimits* limits,
+      quadruped_local_planner::LocalPlannerLimits* limits,
       const Eigen::Vector3f& vsamples,
       bool discretize_by_time = false);
 
@@ -136,14 +136,14 @@ public:
         Eigen::Vector3f pos,
         Eigen::Vector3f vel,
         Eigen::Vector3f sample_target_vel,
-        base_local_planner::Trajectory& traj);
+        quadruped_local_planner::Trajectory& traj);
 
 protected:
 
   unsigned int next_sample_index_;
   // to store sample params of each sample between init and generation
   std::vector<Eigen::Vector3f> sample_params_;
-  base_local_planner::LocalPlannerLimits* limits_;
+  quadruped_local_planner::LocalPlannerLimits* limits_;
   Eigen::Vector3f pos_;
   Eigen::Vector3f vel_;
 
@@ -158,3 +158,58 @@ protected:
 
 } /* namespace base_local_planner */
 #endif /* SIMPLE_TRAJECTORY_GENERATOR_H_ */
+
+namespace quadruped_local_planner{
+
+class VelocityIterator {
+    public:
+      VelocityIterator(double min, double max, int num_samples):
+        current_index(0)
+      {
+        if (min == max) {
+          samples_.push_back(min);
+        } else {
+          num_samples = std::max(2, num_samples);
+
+          // e.g. for 4 samples, split distance in 3 even parts
+          double step_size = (max - min) / double(std::max(1, (num_samples - 1)));
+
+          // we make sure to avoid rounding errors around min and max.
+          double current;
+          double next = min;
+          for (int j = 0; j < num_samples - 1; ++j) {
+            current = next;
+            next += step_size;
+            samples_.push_back(current);
+            // if 0 is among samples, this is never true. Else it inserts a 0 between the positive and negative samples
+            if ((current < 0) && (next > 0)) {
+              samples_.push_back(0.0);
+            }
+          }
+          samples_.push_back(max);
+        }
+      }
+
+      double getVelocity(){
+        return samples_.at(current_index);
+      }
+
+      VelocityIterator& operator++(int){
+        current_index++;
+        return *this;
+      }
+
+      void reset(){
+        current_index = 0;
+      }
+
+      bool isFinished(){
+        return current_index >= samples_.size();
+      }
+
+    private:
+      std::vector<double> samples_;
+      unsigned int current_index;
+  };
+
+}

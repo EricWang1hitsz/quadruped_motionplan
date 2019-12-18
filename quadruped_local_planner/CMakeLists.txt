@@ -12,6 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  costmap_2d
+  tf2_ros
+  tf2_geometry_msgs
+  tf2
 )
 
 ## System dependencies are found with CMake's conventions
@@ -126,8 +130,27 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/quadruped_local_planner.cpp
 # )
+add_library(${PROJECT_NAME}
+    src/odometry_helper_ros.cpp
+    src/simple_scored_sampling_planner.cpp
+    src/simple_trajectory_generator.cpp
+    src/trajectory.cpp
+    src/goal_functions.cpp
+    src/map_grid_cost_function.cpp
+    src/oscillation_cost_function.cpp
+    src/twirling_cost_function.cpp)
+add_library(dwa_planner_ros src/dwa_planner_ros.cpp)
+target_link_libraries(dwa_planner_ros
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME})
 add_library(dwa_planner src/dwa_planner.cpp)
-
+target_link_libraries(dwa_planner
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME})
+add_library(latched_stop_rotate_controller src/latched_stop_rotate_controller.cpp)
+target_link_libraries(latched_stop_rotate_controller
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME})
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -153,8 +176,7 @@ add_library(dwa_planner src/dwa_planner.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(dwa_planner
-    ${catkin_LIBRARIES})
+
 
 #############
 ## Install ##

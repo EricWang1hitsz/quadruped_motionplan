@@ -39,12 +39,10 @@
 #define SIMPLE_SCORED_SAMPLING_PLANNER_H_
 
 #include <vector>
-#include <base_local_planner/trajectory.h>
-#include <base_local_planner/trajectory_cost_function.h>
-#include <base_local_planner/trajectory_sample_generator.h>
-#include <base_local_planner/trajectory_search.h>
+#include "trajectory.h"
+#include "simple_trajectory_generator.h"
 
-namespace base_local_planner {
+namespace quadruped_local_planner {
 
 /**
  * @class SimpleScoredSamplingPlanner
@@ -55,7 +53,7 @@ namespace base_local_planner {
  * the TrajectorySearch interface. More efficient search may well be
  * possible using search heuristics, parallel search, etc.
  */
-class SimpleScoredSamplingPlanner : public base_local_planner::TrajectorySearch {
+class SimpleScoredSamplingPlanner {
 public:
 
   ~SimpleScoredSamplingPlanner() {}
@@ -71,7 +69,7 @@ public:
    * passing max_samples = -1 (default): Each Sampling planner will continue to call
    * generator until generator runs out of samples (or forever if that never happens)
    */
-  SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples = -1);
+  SimpleScoredSamplingPlanner(std::vector<SimpleTrajectoryGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples = -1);
 
   /**
    * runs all scoring functions over the trajectory creating a weigthed sum
@@ -95,7 +93,7 @@ public:
 
 
 private:
-  std::vector<TrajectorySampleGenerator*> gen_list_;
+  std::vector<SimpleTrajectoryGenerator*> gen_list_;
   std::vector<TrajectoryCostFunction*> critics_;
 
   int max_samples_;

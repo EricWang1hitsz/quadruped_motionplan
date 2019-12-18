@@ -32,80 +32,58 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * Author: Eitan Marder-Eppstein
+ * Author: TKruse
  *********************************************************************/
 
-#ifndef ABSTRACT_LOCAL_PLANNER_ODOM_H_
-#define ABSTRACT_LOCAL_PLANNER_ODOM_H_
+#ifndef OSCILLATION_COST_FUNCTION_H_
+#define OSCILLATION_COST_FUNCTION_H_
 
-#include <nav_core/base_local_planner.h>
-
-#include <boost/thread.hpp>
-
-#include <costmap_2d/costmap_2d.h>
-#include <tf2_ros/buffer.h>
-
-#include "local_planner_limits.h"
-
+#include "trajectory.h"
+#include <Eigen/Core>
 
 namespace quadruped_local_planner {
 
-/**
- * @class LocalPlannerUtil
- * @brief Helper class implementing infrastructure code many local planner implementations may need.
- */
-class LocalPlannerUtil {
-
-private:
-  // things we get from move_base
-  std::string name_;
-  std::string global_frame_;
-
-  costmap_2d::Costmap2D* costmap_;
-  tf2_ros::Buffer* tf_;
-
-
-  std::vector<geometry_msgs::PoseStamped> global_plan_;
-
-
-  boost::mutex limits_configuration_mutex_;
-  bool setup_;
-  LocalPlannerLimits default_limits_;
-  LocalPlannerLimits limits_;
-  bool initialized_;
-
+class OscillationCostFunction: public quadruped_local_planner::TrajectoryCostFunction {
 public:
+  OscillationCostFunction();
+  virtual ~OscillationCostFunction();
+
+  double scoreTrajectory(Trajectory &traj);
+
+  bool prepare() {return true;};
 
   /**
-   * @brief  Callback to update the local planner's parameters
+   * @brief  Reset the oscillation flags for the local planner
    */
-  void reconfigureCB(LocalPlannerLimits &config, bool restore_defaults);
+  void resetOscillationFlags();
 
-  LocalPlannerUtil() : initialized_(false) {}
 
-  ~LocalPlannerUtil() {
-  }
+  void updateOscillationFlags(Eigen::Vector3f pos, quadruped_local_planner::Trajectory* traj, double min_vel_trans);
 
-  void initialize(tf2_ros::Buffer* tf,
-      costmap_2d::Costmap2D* costmap,
-      std::string global_frame);
+  void setOscillationResetDist(double dist, double angle);
 
-  bool getGoal(geometry_msgs::PoseStamped& goal_pose);
+private:
 
-  bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
+  void resetOscillationFlagsIfPossible(const Eigen::Vector3f& pos, const Eigen::Vector3f& prev);
 
-  bool getLocalPlan(const geometry_msgs::PoseStamped& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan);
+  /**
+   * @brief  Given a trajectory that's selected, set flags if needed to
+   * prevent the robot from oscillating
+   * @param  t The selected trajectory
+   * @return True if a flag was set, false otherwise
+   */
+  bool setOscillationFlags(quadruped_local_planner::Trajectory* t, double min_vel_trans);
 
-  costmap_2d::Costmap2D* getCostmap();
+  // flags
+  bool strafe_pos_only_, strafe_neg_only_, strafing_pos_, strafing_neg_;
+  bool rot_pos_only_, rot_neg_only_, rotating_pos_, rotating_neg_;
+  bool forward_pos_only_, forward_neg_only_, forward_pos_, forward_neg_;
 
-  LocalPlannerLimits getCurrentLimits();
+  // param
+  double oscillation_reset_dist_, oscillation_reset_angle_;
 
-  std::string getGlobalFrame(){ return global_frame_; }
+  Eigen::Vector3f prev_stationary_pos_;
 };
 
-
-
-
-};
-
-#endif /* ABSTRACT_LOCAL_PLANNER_ODOM_H_ */
+} /* namespace base_local_planner */
+#endif /* OSCILLATION_COST_FUNCTION_H_ */

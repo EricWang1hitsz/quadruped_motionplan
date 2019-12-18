@@ -114,5 +114,38 @@ namespace quadruped_local_planner {
       std::vector<double> th_pts_; ///< @brief The theta points in the trajectory
 
   };
+
+  class TrajectoryCostFunction {
+  public:
+
+    /**
+     *
+     * General updating of context values if required.
+     * Subclasses may overwrite. Return false in case there is any error.
+     */
+    virtual bool prepare() = 0;
+
+    /**
+     * return a score for trajectory traj
+     */
+    virtual double scoreTrajectory(Trajectory &traj) = 0;
+
+    double getScale() {
+      return scale_;
+    }
+
+    void setScale(double scale) {
+      scale_ = scale;
+    }
+
+    virtual ~TrajectoryCostFunction() {}
+
+  protected:
+    TrajectoryCostFunction(double scale = 1.0): scale_(scale) {}
+
+  private:
+    double scale_;
+  };
+
 };
 #endif

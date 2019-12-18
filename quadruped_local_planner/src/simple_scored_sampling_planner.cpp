@@ -35,13 +35,13 @@
  * Author: TKruse
  *********************************************************************/
 
-#include <base_local_planner/simple_scored_sampling_planner.h>
+#include "simple_scored_sampling_planner.h"
 
 #include <ros/console.h>
 
-namespace base_local_planner {
+namespace quadruped_local_planner {
   
-  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples) {
+  SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<SimpleTrajectoryGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples) {
     max_samples_ = max_samples;
     gen_list_ = gen_list;
     critics_ = critics;
@@ -92,10 +92,10 @@ namespace base_local_planner {
       }
     }
 
-    for (std::vector<TrajectorySampleGenerator*>::iterator loop_gen = gen_list_.begin(); loop_gen != gen_list_.end(); ++loop_gen) {
+    for (std::vector<SimpleTrajectoryGenerator*>::iterator loop_gen = gen_list_.begin(); loop_gen != gen_list_.end(); ++loop_gen) {
       count = 0;
       count_valid = 0;
-      TrajectorySampleGenerator* gen_ = *loop_gen;
+      SimpleTrajectoryGenerator* gen_ = *loop_gen;
       while (gen_->hasMoreTrajectories()) {
       //eric_wang: creat and return the next sample trajectory.
         gen_success = gen_->nextTrajectory(loop_traj);
