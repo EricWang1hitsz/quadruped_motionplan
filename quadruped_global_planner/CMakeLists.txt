@@ -149,6 +149,7 @@ add_library(quadruped_motionplannerInfRRTstar src/MotionPlannerInfRRTstar.cpp)
 add_library(quadruped_motionvaliditychecker src/MotionValidityChecker.cpp)
 add_library(quadruped_statevaliditychecker src/StateValidityChecker.cpp)
 add_library(quadruped_motioncostintegralobjective src/MotionCostIntegralObjective.cpp)
+add_library(quadruped_motionplannerdisplay src/MotionPlannerDisplay.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -218,6 +219,11 @@ target_link_libraries(quadruped_motionplannerInfRRTstar
 target_link_libraries(quadruped_motioncostintegralobjective
     ${catkin_LIBRARIES}
     ${OMPL_LIBRARY_DIRS}
+    )
+target_link_libraries(quadruped_motionplannerdisplay
+    ${catkin_LIBRARIES}
+    ${OMPL_LIBRARY_DIRS}
+    quadruped_motionplannerRRTstar
     )
 
 

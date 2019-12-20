@@ -29,7 +29,7 @@ namespace ompl
         */
 
         /** \brief Informed RRT* */
-        class InformedRRTstar_IM : public RRTstar
+        class InformedRRTstar_IM : public RRTstar_IM
         {
         public:
             /** \brief Constructor */

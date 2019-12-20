@@ -1,6 +1,6 @@
 #include "MotionPlannerInfRRTstar.hpp"
 
-ompl::geometric::InformedRRTstar_IM::InformedRRTstar_IM(const base::SpaceInformationPtr &si) : RRTstar(si)
+ompl::geometric::InformedRRTstar_IM::InformedRRTstar_IM(const base::SpaceInformationPtr &si) : RRTstar_IM(si)
 {
     OMPL_INFORM("Using Improved InformedRRTstar");
     // Set my name:

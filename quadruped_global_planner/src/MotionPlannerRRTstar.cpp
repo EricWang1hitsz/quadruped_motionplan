@@ -14,49 +14,55 @@
 #include "ompl/tools/config/SelfConfig.h"
 #include "ompl/util/GeometricEquations.h"
 
-ompl::geometric::RRTstar::RRTstar(const base::SpaceInformationPtr &si)
+ompl::geometric::RRTstar_IM::RRTstar_IM(const base::SpaceInformationPtr &si)
   : base::Planner(si, "RRTstar")
 {
     specs_.approximateSolutions = true;
     specs_.optimizingPaths = true;
     specs_.canReportIntermediateSolutions = true;
 
-    Planner::declareParam<double>("range", this, &RRTstar::setRange, &RRTstar::getRange, "0.:1.:10000.");
-    Planner::declareParam<double>("goal_bias", this, &RRTstar::setGoalBias, &RRTstar::getGoalBias, "0.:.05:1.");
-    Planner::declareParam<double>("rewire_factor", this, &RRTstar::setRewireFactor, &RRTstar::getRewireFactor,
+    Planner::declareParam<double>("range", this, &RRTstar_IM::setRange, &RRTstar_IM::getRange, "0.:1.:10000.");
+    Planner::declareParam<double>("goal_bias", this, &RRTstar_IM::setGoalBias, &RRTstar_IM::getGoalBias, "0.:.05:1.");
+    Planner::declareParam<double>("rewire_factor", this, &RRTstar_IM::setRewireFactor, &RRTstar_IM::getRewireFactor,
                                   "1.0:0.01:2.0");
-    Planner::declareParam<bool>("use_k_nearest", this, &RRTstar::setKNearest, &RRTstar::getKNearest, "0,1");
-    Planner::declareParam<bool>("delay_collision_checking", this, &RRTstar::setDelayCC, &RRTstar::getDelayCC, "0,1");
-    Planner::declareParam<bool>("tree_pruning", this, &RRTstar::setTreePruning, &RRTstar::getTreePruning, "0,1");
-    Planner::declareParam<double>("prune_threshold", this, &RRTstar::setPruneThreshold, &RRTstar::getPruneThreshold,
+    Planner::declareParam<bool>("use_k_nearest", this, &RRTstar_IM::setKNearest, &RRTstar_IM::getKNearest, "0,1");
+    Planner::declareParam<bool>("delay_collision_checking", this, &RRTstar_IM::setDelayCC, &RRTstar_IM::getDelayCC, "0,1");
+    Planner::declareParam<bool>("tree_pruning", this, &RRTstar_IM::setTreePruning, &RRTstar_IM::getTreePruning, "0,1");
+    Planner::declareParam<double>("prune_threshold", this, &RRTstar_IM::setPruneThreshold, &RRTstar_IM::getPruneThreshold,
                                   "0.:.01:1.");
-    Planner::declareParam<bool>("pruned_measure", this, &RRTstar::setPrunedMeasure, &RRTstar::getPrunedMeasure, "0,1");
-    Planner::declareParam<bool>("informed_sampling", this, &RRTstar::setInformedSampling, &RRTstar::getInformedSampling,
+    Planner::declareParam<bool>("pruned_measure", this, &RRTstar_IM::setPrunedMeasure, &RRTstar_IM::getPrunedMeasure, "0,1");
+    Planner::declareParam<bool>("informed_sampling", this, &RRTstar_IM::setInformedSampling, &RRTstar_IM::getInformedSampling,
                                 "0,1");
-    Planner::declareParam<bool>("sample_rejection", this, &RRTstar::setSampleRejection, &RRTstar::getSampleRejection,
+    Planner::declareParam<bool>("sample_rejection", this, &RRTstar_IM::setSampleRejection, &RRTstar_IM::getSampleRejection,
                                 "0,1");
-    Planner::declareParam<bool>("new_state_rejection", this, &RRTstar::setNewStateRejection,
-                                &RRTstar::getNewStateRejection, "0,1");
-    Planner::declareParam<bool>("use_admissible_heuristic", this, &RRTstar::setAdmissibleCostToCome,
-                                &RRTstar::getAdmissibleCostToCome, "0,1");
-    Planner::declareParam<bool>("ordered_sampling", this, &RRTstar::setOrderedSampling, &RRTstar::getOrderedSampling,
+    Planner::declareParam<bool>("new_state_rejection", this, &RRTstar_IM::setNewStateRejection,
+                                &RRTstar_IM::getNewStateRejection, "0,1");
+    Planner::declareParam<bool>("use_admissible_heuristic", this, &RRTstar_IM::setAdmissibleCostToCome,
+                                &RRTstar_IM::getAdmissibleCostToCome, "0,1");
+    Planner::declareParam<bool>("ordered_sampling", this, &RRTstar_IM::setOrderedSampling, &RRTstar_IM::getOrderedSampling,
                                 "0,1");
-    Planner::declareParam<unsigned int>("ordering_batch_size", this, &RRTstar::setBatchSize, &RRTstar::getBatchSize,
+    Planner::declareParam<unsigned int>("ordering_batch_size", this, &RRTstar_IM::setBatchSize, &RRTstar_IM::getBatchSize,
                                         "1:100:1000000");
-    Planner::declareParam<bool>("focus_search", this, &RRTstar::setFocusSearch, &RRTstar::getFocusSearch, "0,1");
-    Planner::declareParam<unsigned int>("number_sampling_attempts", this, &RRTstar::setNumSamplingAttempts,
-                                        &RRTstar::getNumSamplingAttempts, "10:10:100000");
+    Planner::declareParam<bool>("focus_search", this, &RRTstar_IM::setFocusSearch, &RRTstar_IM::getFocusSearch, "0,1");
+    Planner::declareParam<unsigned int>("number_sampling_attempts", this, &RRTstar_IM::setNumSamplingAttempts,
+                                        &RRTstar_IM::getNumSamplingAttempts, "10:10:100000");
 
     addPlannerProgressProperty("iterations INTEGER", [this] { return numIterationsProperty(); });
     addPlannerProgressProperty("best cost REAL", [this] { return bestCostProperty(); });
+
+
+    //eric_wang:
+    state_marker_pub_ = nodehandle_.advertise<visualization_msgs::Marker>("State_Marker", 1000);
+    ROS_INFO("MotionPlannerRRTstar::Publish state marker");
 }
 
-ompl::geometric::RRTstar::~RRTstar()
+
+ompl::geometric::RRTstar_IM::~RRTstar_IM()
 {
     freeMemory();
 }
 
-void ompl::geometric::RRTstar::setup()
+void ompl::geometric::RRTstar_IM::setup()
 {
     Planner::setup();
     tools::SelfConfig sc(si_, getName());
@@ -81,7 +87,7 @@ void ompl::geometric::RRTstar::setup()
             opt_ = pdef_->getOptimizationObjective();
         else
         {
-            OMPL_INFORM("%s: No optimization objective specified. Defaulting to optimizing path length for the allowed "
+            OMPL_INFORM("%s:No optimization objective specified. Defaulting to optimizing path length for the allowed "
                         "planning time.",
                         getName().c_str());
             opt_ = std::make_shared<base::PathLengthOptimizationObjective>(si_);
@@ -107,7 +113,7 @@ void ompl::geometric::RRTstar::setup()
     calculateRewiringLowerBounds();
 }
 
-void ompl::geometric::RRTstar::clear()
+void ompl::geometric::RRTstar_IM::clear()
 {
     setup_ = false;
     Planner::clear();
@@ -127,8 +133,9 @@ void ompl::geometric::RRTstar::clear()
     prunedMeasure_ = 0.0;
 }
 
-ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTerminationCondition &ptc)
+ompl::base::PlannerStatus ompl::geometric::RRTstar_IM::solve(const base::PlannerTerminationCondition &ptc)
 {
+    OMPL_INFORM("MotionPlannerRRTstar_IM::Solve");
     checkValidity();
     base::Goal *goal = pdef_->getGoal().get();
     auto *goal_s = dynamic_cast<base::GoalSampleableRegion *>(goal);
@@ -211,6 +218,8 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
 
     while (ptc == false)
     {
+        //eric_wang:
+        OMPL_INFORM("MotionPlannerRRTstar_IM::while(ptc == false)");
         iterations_++;
 
         // sample random state (with goal biasing)
@@ -246,6 +255,7 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
         // Check if the motion between the nearest state and the state to add is valid
         if (si_->checkMotion(nmotion->state, dstate))
         {
+            ROS_INFO("MotionPlannerRRTstar_IM::checkMotion()");
             // create a motion
             auto *motion = new Motion(si_);
             si_->copyState(motion->state, dstate);
@@ -373,6 +383,12 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
             {
                 // add motion to the tree
                 nn_->add(motion);
+                //eric_wang:
+                ROS_INFO("MotionPlannerRRTstar_IM::add motion to the tree");
+                ompl::base::State *state_;
+                state_ = motion->state;
+                stateMarkerPub(state_);
+                //
                 motion->parent->children.push_back(motion);
             }
 
@@ -563,9 +579,13 @@ ompl::base::PlannerStatus ompl::geometric::RRTstar::solve(const base::PlannerTer
 
     // We've added a solution if newSolution == true, and it is an approximate solution if bestGoalMotion_ == false
     return {newSolution != nullptr, bestGoalMotion_ == nullptr};
+
+    //eric_wang: TODO Publish line;
+
+    state_marker_pub_.publish(line);
 }
 
-void ompl::geometric::RRTstar::getNeighbors(Motion *motion, std::vector<Motion *> &nbh) const
+void ompl::geometric::RRTstar_IM::getNeighbors(Motion *motion, std::vector<Motion *> &nbh) const
 {
     auto cardDbl = static_cast<double>(nn_->size() + 1u);
     if (useKNearest_)
@@ -582,7 +602,7 @@ void ompl::geometric::RRTstar::getNeighbors(Motion *motion, std::vector<Motion *
     }
 }
 
-void ompl::geometric::RRTstar::removeFromParent(Motion *m)
+void ompl::geometric::RRTstar_IM::removeFromParent(Motion *m)
 {
     for (auto it = m->parent->children.begin(); it != m->parent->children.end(); ++it)
     {
@@ -594,7 +614,7 @@ void ompl::geometric::RRTstar::removeFromParent(Motion *m)
     }
 }
 
-void ompl::geometric::RRTstar::updateChildCosts(Motion *m)
+void ompl::geometric::RRTstar_IM::updateChildCosts(Motion *m)
 {
     for (std::size_t i = 0; i < m->children.size(); ++i)
     {
@@ -603,7 +623,7 @@ void ompl::geometric::RRTstar::updateChildCosts(Motion *m)
     }
 }
 
-void ompl::geometric::RRTstar::freeMemory()
+void ompl::geometric::RRTstar_IM::freeMemory()
 {
     if (nn_)
     {
@@ -618,7 +638,7 @@ void ompl::geometric::RRTstar::freeMemory()
     }
 }
 
-void ompl::geometric::RRTstar::getPlannerData(base::PlannerData &data) const
+void ompl::geometric::RRTstar_IM::getPlannerData(base::PlannerData &data) const
 {
     Planner::getPlannerData(data);
 
@@ -638,7 +658,7 @@ void ompl::geometric::RRTstar::getPlannerData(base::PlannerData &data) const
     }
 }
 
-int ompl::geometric::RRTstar::pruneTree(const base::Cost &pruneTreeCost)
+int ompl::geometric::RRTstar_IM::pruneTree(const base::Cost &pruneTreeCost)
 {
     // Variable
     // The percent improvement (expressed as a [0,1] fraction) in cost
@@ -837,7 +857,7 @@ int ompl::geometric::RRTstar::pruneTree(const base::Cost &pruneTreeCost)
     return numPruned;
 }
 
-void ompl::geometric::RRTstar::addChildrenToList(std::queue<Motion *, std::deque<Motion *>> *motionList, Motion *motion)
+void ompl::geometric::RRTstar_IM::addChildrenToList(std::queue<Motion *, std::deque<Motion *>> *motionList, Motion *motion)
 {
     for (auto &child : motion->children)
     {
@@ -845,7 +865,7 @@ void ompl::geometric::RRTstar::addChildrenToList(std::queue<Motion *, std::deque
     }
 }
 
-bool ompl::geometric::RRTstar::keepCondition(const Motion *motion, const base::Cost &threshold) const
+bool ompl::geometric::RRTstar_IM::keepCondition(const Motion *motion, const base::Cost &threshold) const
 {
     // We keep if the cost-to-come-heuristic of motion is <= threshold, by checking
     // if !(threshold < heuristic), as if b is not better than a, then a is better than, or equal to, b
@@ -858,7 +878,7 @@ bool ompl::geometric::RRTstar::keepCondition(const Motion *motion, const base::C
     return !opt_->isCostBetterThan(threshold, solutionHeuristic(motion));
 }
 
-ompl::base::Cost ompl::geometric::RRTstar::solutionHeuristic(const Motion *motion) const
+ompl::base::Cost ompl::geometric::RRTstar_IM::solutionHeuristic(const Motion *motion) const
 {
     base::Cost costToCome;
     if (useAdmissibleCostToCome_)
@@ -884,7 +904,7 @@ ompl::base::Cost ompl::geometric::RRTstar::solutionHeuristic(const Motion *motio
     return opt_->combineCosts(costToCome, costToGo);            // add the two costs
 }
 
-void ompl::geometric::RRTstar::setTreePruning(const bool prune)
+void ompl::geometric::RRTstar_IM::setTreePruning(const bool prune)
 {
     if (static_cast<bool>(opt_) == true)
     {
@@ -904,7 +924,7 @@ void ompl::geometric::RRTstar::setTreePruning(const bool prune)
     useTreePruning_ = prune;
 }
 
-void ompl::geometric::RRTstar::setPrunedMeasure(bool informedMeasure)
+void ompl::geometric::RRTstar_IM::setPrunedMeasure(bool informedMeasure)
 {
     if (static_cast<bool>(opt_) == true)
     {
@@ -947,7 +967,7 @@ void ompl::geometric::RRTstar::setPrunedMeasure(bool informedMeasure)
     }
 }
 
-void ompl::geometric::RRTstar::setInformedSampling(bool informedSampling)
+void ompl::geometric::RRTstar_IM::setInformedSampling(bool informedSampling)
 {
     if (static_cast<bool>(opt_) == true)
     {
@@ -995,7 +1015,7 @@ void ompl::geometric::RRTstar::setInformedSampling(bool informedSampling)
     }
 }
 
-void ompl::geometric::RRTstar::setSampleRejection(const bool reject)
+void ompl::geometric::RRTstar_IM::setSampleRejection(const bool reject)
 {
     if (static_cast<bool>(opt_) == true)
     {
@@ -1031,7 +1051,7 @@ void ompl::geometric::RRTstar::setSampleRejection(const bool reject)
     }
 }
 
-void ompl::geometric::RRTstar::setOrderedSampling(bool orderSamples)
+void ompl::geometric::RRTstar_IM::setOrderedSampling(bool orderSamples)
 {
     // Make sure we're using some type of informed sampling
     if (useInformedSampling_ == false && useRejectionSampling_ == false)
@@ -1059,7 +1079,7 @@ void ompl::geometric::RRTstar::setOrderedSampling(bool orderSamples)
     }
 }
 
-void ompl::geometric::RRTstar::allocSampler()
+void ompl::geometric::RRTstar_IM::allocSampler()
 {
     // Allocate the appropriate type of sampler.
     if (useInformedSampling_)
@@ -1088,7 +1108,7 @@ void ompl::geometric::RRTstar::allocSampler()
     // No else
 }
 
-bool ompl::geometric::RRTstar::sampleUniform(base::State *statePtr)
+bool ompl::geometric::RRTstar_IM::sampleUniform(base::State *statePtr)
 {
     // Use the appropriate sampler
     if (useInformedSampling_ || useRejectionSampling_)
@@ -1109,7 +1129,7 @@ bool ompl::geometric::RRTstar::sampleUniform(base::State *statePtr)
     }
 }
 
-void ompl::geometric::RRTstar::calculateRewiringLowerBounds()
+void ompl::geometric::RRTstar_IM::calculateRewiringLowerBounds()
 {
     const auto dimDbl = static_cast<double>(si_->getStateDimension());
 
@@ -1121,4 +1141,60 @@ void ompl::geometric::RRTstar::calculateRewiringLowerBounds()
     r_rrt_ =
         rewireFactor_ *
         std::pow(2 * (1.0 + 1.0 / dimDbl) * (prunedMeasure_ / unitNBallMeasure(si_->getStateDimension())), 1.0 / dimDbl);
+}
+
+void ompl::geometric::RRTstar_IM::stateMarkerPub(base::State *state)
+{
+    const ob::SE2StateSpace::StateType *se2state = state->as<ob::SE2StateSpace::StateType>();
+    const ob::RealVectorStateSpace::StateType *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
+
+    double x = pos->values[0];
+    double y = pos->values[1];
+    double yaw = pos->values[2];
+
+    p.x = x;
+    p.y = y;
+    p.z = 0.5;
+
+    points.header.frame_id = "odom";
+    line.header.frame_id = "odom";
+    points.header.stamp = ros::Time(0);
+    line.header.stamp = ros::Time(0);
+
+    points.ns = "markers";
+    line.ns = "markers";
+    points.id = 0;
+    line.id =1;
+
+
+    points.type = points.POINTS;
+    line.type = line.LINE_LIST;
+
+    //Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
+    points.action =points.ADD;
+    line.action = line.ADD;
+    points.pose.orientation.w = 1.0;
+    line.pose.orientation.w = 1.0;
+    line.scale.x =  0.03;
+    line.scale.y = 0.03;
+    points.scale.x = 0.3;
+    points.scale.y = 0.3;
+
+    line.color.r = 9.0/255.0;
+    line.color.g = 91.0/255.0;
+    line.color.b = 236.0/255.0;
+    points.color.r = 255.0/255.0;
+    points.color.g = 0.0/255.0;
+    points.color.b = 0.0/255.0;
+    points.color.a = 1.0;
+    line.color.a = 1.0;
+    points.lifetime = ros::Duration();
+    line.lifetime = ros::Duration();
+
+    line.points.push_back(p);
+    points.points.push_back(p);
+
+//    state_marker_pub_.publish(points);
+
+    ROS_INFO("Publish sampled state maker once");
 }

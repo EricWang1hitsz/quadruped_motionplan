@@ -10,6 +10,7 @@ motion_planning::motion_planning(void)
     ROS_INFO("Class motion_planning constrcting...");
     traj_pub_ = nh_.advertise<nav_msgs::Path>("waypoints", 1000);
     traj3d_pub_ = nh_.advertise<nav_msgs::Path>("waypoints_3d", 1000);
+    trajectory_pub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("trajectory", 1000);
     elevation_map_sub_ = nh_.subscribe("/traversability_estimation/traversability_map", 1, &motion_planning::elevationMapCallback, this);
 //    elevation_map_sub_ = nh_.subscribe("/traversability_estimation/traversability_map", &motion_planning::elevationMapCallback, this);
     base_pose_sub_ = nh_.subscribe("/pose_pub_node/base_pose", 1, &motion_planning::basePoseCb, this);
@@ -150,7 +151,7 @@ void motion_planning::plan()
     plan->setup();
 
     // attempt to solve the problem within ten seconds of planning time
-    ob::PlannerStatus solved = plan->solve(30.0);
+    ob::PlannerStatus solved = plan->solve(20.0);
     if (solved)
     {
         std::cout << "Found solution:" << std::endl;
@@ -166,6 +167,7 @@ void motion_planning::plan()
         pathBSpline->smoothBSpline(*pth_, 5);
 //        traj_pub(pth_);
         traj3d_pub(pth_); // Bspline trajectory.
+        trajectory_pub(pth_);
     }
     else
         std::cout << "No solution found" << std::endl;
@@ -188,6 +190,46 @@ float motion_planning::getElevationInformation(const grid_map::Position& positio
     return elevation;
 }
 
+void motion_planning::trajectory_pub(og::PathGeometric *pth)
+{
+    ROS_INFO("Receive path successfully, start publishing trajectory");
+    trajectory_msgs::MultiDOFJointTrajectory trajectory_msg;
+    trajectory_msgs::MultiDOFJointTrajectoryPoint trajectory_point_msg;
+
+    trajectory_msg.header.stamp = ros::Time::now();
+    trajectory_msg.header.frame_id = "odom";
+    trajectory_msg.joint_names.clear();
+    trajectory_msg.points.clear();
+    trajectory_msg.joint_names.push_back("base_link");
+
+    for(std::size_t path_idx = 0; path_idx < pth->getStateCount(); path_idx++)
+    {
+        const ob::SE2StateSpace::StateType *se2state = pth->getState(path_idx)->as<ob::SE2StateSpace::StateType>();
+        const ob::RealVectorStateSpace::StateType *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
+        const ob::SO2StateSpace::StateType *rot = se2state->as<ob::SO2StateSpace::StateType>(1);
+
+        trajectory_point_msg.time_from_start.fromNSec(ros::Time::now().toSec());
+        trajectory_point_msg.transforms.resize(1);
+
+        trajectory_point_msg.transforms[0].translation.x = pos->values[0];
+        trajectory_point_msg.transforms[0].translation.y = pos->values[1];
+        trajectory_point_msg.transforms[0].translation.z = 0.5;
+
+        double yaw = rot->value;
+        geometry_msgs::Quaternion quat = tf::createQuaternionMsgFromYaw(yaw);
+        trajectory_point_msg.transforms[0].rotation.x = quat.x;
+        trajectory_point_msg.transforms[0].rotation.y = quat.y;
+        trajectory_point_msg.transforms[0].rotation.z = quat.z;
+        trajectory_point_msg.transforms[0].rotation.w = quat.w;
+//        trajectory_point_msg.velocities.
+
+
+        trajectory_msg.points.push_back(trajectory_point_msg);
+
+    }
+
+    trajectory_pub_.publish(trajectory_msg);
+}
 
 void motion_planning::traj_pub(og::PathGeometric* pth)
 {

@@ -11,6 +11,8 @@
 #include "MotionPlannerInfRRTstar.hpp"
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -41,6 +43,11 @@ public:
     void traj_pub(og::PathGeometric* pth);
 
     void traj3d_pub(og::PathGeometric* pth);
+    /**
+     * @brief trajectory_pub publish trajectory_msgs::MultiDOFJointTrajectory.
+     * @param pth
+     */
+    void trajectory_pub(og::PathGeometric* pth);
 
     void elevationMapCallback(const grid_map_msgs::GridMapPtr& elevation_map);
 
@@ -64,6 +71,10 @@ private:
     ros::Publisher traj_pub_;
 
     ros::Publisher traj3d_pub_;
+    /**
+     * @brief trajectory_pub_ publish trajectory_msgs::MultiDOFJointTrajectory.
+     */
+    ros::Publisher trajectory_pub_;
 
     ros::Subscriber elevation_map_sub_;
 

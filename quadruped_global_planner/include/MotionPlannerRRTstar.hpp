@@ -10,6 +10,8 @@
 #include "ompl/base/StateValidityChecker.h"
 #include "ompl/base/PlannerData.h"
 
+#include "MotionPlanningSampler.hpp"
+
 #include <limits>
 #include <vector>
 #include <queue>
@@ -40,12 +42,12 @@ namespace ompl
         */
 
         /** \brief Optimal Rapidly-exploring Random Trees */
-        class RRTstar : public base::Planner
+        class RRTstar_IM : public base::Planner
         {
         public:
-            RRTstar(const base::SpaceInformationPtr &si);
+            RRTstar_IM(const base::SpaceInformationPtr &si);
 
-            ~RRTstar() override;
+            ~RRTstar_IM() override;
 
             void getPlannerData(base::PlannerData &data) const override;
 
@@ -297,6 +299,9 @@ namespace ompl
                 return bestCost_;
             }
 
+            //eric_wang:
+            void stateMarkerPub(base::State *state);
+
         protected:
             /** \brief Representation of a motion */
             class Motion
@@ -306,6 +311,7 @@ namespace ompl
                  * memory for \e state, \e cost, and \e incCost */
                 Motion(const base::SpaceInformationPtr &si) : state(si->allocState()), parent(nullptr), inGoal(false)
                 {
+
                 }
 
                 ~Motion() = default;
@@ -328,6 +334,11 @@ namespace ompl
 
                 /** \brief The set of motions descending from the current motion */
                 std::vector<Motion *> children;
+
+            private:
+
+                //eric_wang:
+
             };
 
             /** \brief Create the samplers */
@@ -491,6 +502,16 @@ namespace ompl
             {
                 return std::to_string(bestCost().value());
             }
+
+        private:
+
+            ros::Publisher state_marker_pub_;
+
+            ros::NodeHandle nodehandle_;
+
+            visualization_msgs::Marker points, line;
+
+            geometry_msgs::Point p;
         };
     }
 }
