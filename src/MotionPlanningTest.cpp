@@ -1,6 +1,7 @@
 #include "MotionPlanner.hpp"
 #include "MotionPlanningSampler.hpp"
-#include "MotionPlanningTest.hpp"
+#include <MotionPlanningTest.hpp>
+#include <ros/ros.h>
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -300,7 +301,28 @@ void motion_planning::traj3d_pub(og::PathGeometric *pth)
     }
 }
 
+//void motion_planning::waypoint_tracked(og::PathGeometric* pth)
+//{
+//    for(std::size_t path_idx = 0; path_idx < pth->getStateCount(); path_idx++)
+//    {
+//        const ob::SE2StateSpace::StateType *se2state = pth->getState(path_idx)->as<ob::SE2StateSpace::StateType>();
+//        const ob::RealVectorStateSpace::StateType *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
+//        double x = pos->values[0];
+//        double y = pos->values[1];
+//        double yaw = pos->values[2];
 
+//        if(yaw - initial_yaw > 0.2)
+//        {
+//            tf::Transform transform;
+//            transform.setOrigin(tf::Vector3(x, y, 0.5));
+//            tf::Quaternion q;
+//            q.setRPY(0, 0, yaw);
+//            transform.setRotation(q);
+//            br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", "waypoint"));
+//        }
+
+//    }
+//}
 
 int main(int argc, char **argv)
 {

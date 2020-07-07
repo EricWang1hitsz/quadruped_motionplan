@@ -17,6 +17,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
 #include <iostream>
 
 namespace ob = ompl::base;
@@ -48,6 +49,8 @@ public:
      * @param pth
      */
     void trajectory_pub(og::PathGeometric* pth);
+
+    void waypoint_tracked(og::PathGeometric* pth);
 
     void elevationMapCallback(const grid_map_msgs::GridMapPtr& elevation_map);
 
@@ -84,15 +87,16 @@ private:
 
     ros::NodeHandle nh_;
 
+    double initial_yaw = 0.0;
+
+    static tf::TransformBroadcaster br;
+
     ob::OptimizationObjectivePtr getPathLengthObjective(const ob::SpaceInformationPtr& si)
     {
         ob::OptimizationObjectivePtr obj (new ob::PathLengthOptimizationObjective(si));
         obj->setCostThreshold(ob::Cost(0.50)); // Specify an optimality threshold.
         return obj;
     }
-
-
-
 
 };
 

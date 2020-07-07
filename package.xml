@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>quadruped_global_planner</name>
+  <name>quadruped_motionplan</name>
   <version>0.0.0</version>
   <description>The quadruped_motionplan package</description>
 
@@ -55,6 +55,9 @@
   <build_export_depend>std_msgs</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <depend>grid_map_ros</depend>
+  <depend>grid_map_core</depend>
+  <depend>traversability_estimation</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

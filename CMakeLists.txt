@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(quadruped_global_planner)
+project(quadruped_motionplan)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
-set(OMPL_INCLUDE_DIRS /usr/local/include/ompl)
+set(OMPL_INCLUDE_DIRS /usr/local/include/ompl-1.6)
 set(OMPL_LIBRARY_DIRS /usr/local/lib/libompl.so)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -15,6 +15,7 @@ find_package(fcl REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  geometry_msgs
   grid_map_core
   grid_map_ros
   traversability_estimation
@@ -114,7 +115,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES quadruped_motionplan
-  CATKIN_DEPENDS roscpp std_msgs
+  CATKIN_DEPENDS roscpp std_msgs grid_map_core grid_map_ros traversability_estimation
 #  DEPENDS system_lib
 )
 
