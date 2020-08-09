@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   grid_map_core
   grid_map_ros
   traversability_estimation
+  traversability_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -151,6 +152,8 @@ add_library(quadruped_motionvaliditychecker src/MotionValidityChecker.cpp)
 add_library(quadruped_statevaliditychecker src/StateValidityChecker.cpp)
 add_library(quadruped_motioncostintegralobjective src/MotionCostIntegralObjective.cpp)
 add_library(quadruped_motionplannerdisplay src/MotionPlannerDisplay.cpp)
+add_library(pathValidityChecker src/PathValidityChecker.cpp)
+add_library(quadruped_motionplanning_test src/MotionPlanningTest.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -161,7 +164,9 @@ add_library(quadruped_motionplannerdisplay src/MotionPlannerDisplay.cpp)
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/quadruped_motionplan_node.cpp)
-add_executable(quadruped_motionplanning_test src/MotionPlanningTest.cpp)
+add_executable(quadruped_motionplanning_test_node src/MotionPlanningTestnode.cpp)
+
+add_executable(pathVilidityCheckerTest test/PathValidityCheckerTest.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -226,7 +231,16 @@ target_link_libraries(quadruped_motionplannerdisplay
     ${OMPL_LIBRARY_DIRS}
     quadruped_motionplannerRRTstar
     )
+target_link_libraries(pathValidityChecker
+    ${catkin_LIBRARIES})
 
+target_link_libraries(pathVilidityCheckerTest
+    ${catkin_LIBRARIES}
+    pathValidityChecker
+    quadruped_motionplanning_test)
+target_link_libraries(quadruped_motionplanning_test_node
+    ${catkin_LIBRARIES}
+    quadruped_motionplanning_test)
 
 #############
 ## Install ##

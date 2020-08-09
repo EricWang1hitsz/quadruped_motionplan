@@ -11,7 +11,7 @@ void ompl::base::myMotionValidator::defaultSettings()
 
 bool ompl::base::myMotionValidator::checkMotion(const State *s1, const State *s2) const
 {
-    ROS_INFO("Checking Motion Validity");
+//    ROS_INFO("Checking Motion Validity");
     /* assume motion starts in a valid configuration so s1 is valid */
     if (!si_->isValid(s2))
     {
@@ -23,7 +23,7 @@ bool ompl::base::myMotionValidator::checkMotion(const State *s1, const State *s2
     std::queue<std::pair<int, int>> pos;
     if(nd >= 2)
     {
-        ROS_INFO("Motion validity checker::checkMotion::nd >= 2");
+//        ROS_INFO("Motion validity checker::checkMotion::nd >= 2");
         pos.emplace(1, nd - 1); //eric_wang: Add 1 and n-1 into pos queue.
 
         /* temporary storage for the checked state */

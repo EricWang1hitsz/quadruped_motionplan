@@ -37,7 +37,7 @@ ompl::base::Cost ompl::base::motionCostIntegralObjective::stateCost(const State 
 
 ompl::base::Cost ompl::base::motionCostIntegralObjective::motionCost(const State *s1, const State *s2) const
 {
-    ROS_INFO("Motion cost integral objective::motion Cost");
+//    ROS_INFO("Motion cost integral objective::motion Cost");
     double distance_;
 
     distance_ = si_->distance(s1, s2); // distance between s1 and s2.

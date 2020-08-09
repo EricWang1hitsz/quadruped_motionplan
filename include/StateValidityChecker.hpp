@@ -26,6 +26,8 @@ public:
 
     void traversabilityMapCallback(const grid_map_msgs::GridMapPtr &traversability_map);
 
+    void localTraversabilityMapCallback(const grid_map_msgs::GridMapPtr &local_traversability_map);
+
 
 private:
 
@@ -34,6 +36,12 @@ private:
     ros::Subscriber traversability_map_sub_;
 
     grid_map::GridMap traversability_map_;
+
+    grid_map::GridMap global_traversability_map_;
+
+    grid_map::GridMap local_traversability_map_;
+
+    const std::string layer_;
 
 };
 }
